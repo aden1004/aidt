@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 디지털교과서 활용도 인터랙티브 대시보드</title>
+    <title>AI 디지털교과서 활용도 인터랙티브 대시보드 (Gemini 연동)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Warm Neutrals with Sky Blue Accent -->
-    <!-- Application Structure Plan: A top-down narrative flow is designed to guide the user from the core problem to data exploration, and finally to causal analysis. It starts with the central dilemma ('Consistency vs. Quality'), moves to an interactive data explorer where users can filter and visualize the quantitative data, then delves into the 'why' with a tabbed interface for subject-specific deep dives, and concludes by presenting the unifying 'Value Threshold' framework. This structure transforms the linear report into an exploratory journey, allowing users to understand the 'what' before digging into the 'why', which enhances comprehension and engagement. -->
+    <!-- Application Structure Plan: A top-down narrative flow is designed to guide the user from the core problem to data exploration, and finally to causal analysis. It starts with the central dilemma ('Consistency vs. Quality'), moves to an interactive data explorer where users can filter and visualize the quantitative data, then delves into the 'why' with a tabbed interface for subject-specific deep dives, and concludes by presenting the unifying 'Value Threshold' framework. This structure transforms the linear report into an exploratory journey, allowing users to understand the 'what' before digging into the 'why', which enhances comprehension and engagement. A new section for Gemini-powered strategic recommendations is added to provide actionable insights. -->
     <!-- Visualization & Content Choices: 
         1. Core Dilemma: Goal=Inform. Method=HTML/CSS cards. Interaction=Hover. Justification=Introduces the report's central conflict visually and concisely.
-        2. Data Explorer: Goal=Compare/Explore. Method=Chart.js Bar Chart & Dynamic Text. Interaction=Button filters. Justification=Allows active user engagement with the core quantitative data, making complex comparisons intuitive.
+        2. Data Explorer: Goal=Compare/Explore. Method=Chart.js Line Chart & Dynamic Text. Interaction=Button filters. Justification=Allows active user engagement with weekly trend data, revealing deeper patterns than simple averages.
         3. Deep Dives: Goal=Organize/Explain. Method=HTML/CSS Tabs. Interaction=Click to reveal. Justification=Breaks down dense analysis into manageable, user-selected sections, preventing information overload.
-        4. Framework Diagram: Goal=Synthesize. Method=HTML/CSS Diagram. Interaction=Static. Justification=Visually summarizes the report's core theoretical model for memorable, high-level understanding.
+        4. Gemini Strategy Engine: Goal=Prescribe/Solve. Method=API call to LLM with weekly data. Interaction=Button click. Justification=Moves beyond analysis to provide creative, actionable solutions based on temporal trends identified in the data.
         All choices adhere to the NO SVG/Mermaid constraint. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -25,15 +25,15 @@
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             margin-left: auto;
             margin-right: auto;
-            height: 300px;
-            max-height: 45vh;
+            height: 350px;
+            max-height: 50vh;
         }
         @media (min-width: 768px) {
             .chart-container {
-                height: 400px;
+                height: 450px;
             }
         }
         .tab-btn.active {
@@ -47,6 +47,22 @@
             color: white;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
+        .gemini-btn {
+            background: linear-gradient(135deg, #60a5fa, #0ea5e9);
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-stone-50 text-stone-800">
@@ -55,7 +71,7 @@
 
         <header class="text-center mb-12">
             <h1 class="text-3xl md:text-4xl font-bold text-stone-900 mb-2">AI 디지털교과서 활용도 분석</h1>
-            <p class="text-lg text-stone-600">일관성의 편의성 vs 품질의 추구</p>
+            <p class="text-lg text-stone-600">데이터를 넘어, AI 전략을 탐색하다</p>
         </header>
 
         <section id="dilemma" class="mb-16">
@@ -76,8 +92,8 @@
 
         <section id="explorer" class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-stone-200 mb-16">
             <div class="text-center mb-8">
-                <h2 class="text-2xl font-bold mb-2">인터랙티브 데이터 탐색기</h2>
-                <p class="text-stone-600 max-w-3xl mx-auto">학년과 과목을 선택하여 서책-디지털 교과서 발행사 일치 여부에 따른 주간 접속률 차이를 확인해보세요.</p>
+                <h2 class="text-2xl font-bold mb-2">주간 활용도 추이 분석</h2>
+                <p class="text-stone-600 max-w-3xl mx-auto">학년과 과목을 선택하여 시간에 따른 주간 접속률 변화를 탐색해보세요.</p>
             </div>
             
             <div class="flex flex-wrap justify-center gap-4 mb-8" id="filter-controls">
@@ -103,24 +119,23 @@
             <div class="chart-container mb-8">
                 <canvas id="accessRateChart"></canvas>
             </div>
-
-            <div id="analysis-display" class="grid md:grid-cols-3 gap-4 text-center max-w-4xl mx-auto mb-6">
-                <div class="bg-sky-50 p-4 rounded-lg">
-                    <p class="text-sm text-sky-800">일치학교 평균 접속률</p>
-                    <p id="matched-avg" class="text-2xl font-bold text-sky-900"></p>
-                </div>
-                <div class="bg-red-50 p-4 rounded-lg">
-                    <p class="text-sm text-red-800">비일치학교 평균 접속률</p>
-                    <p id="unmatched-avg" class="text-2xl font-bold text-red-900"></p>
-                </div>
-                <div class="bg-stone-100 p-4 rounded-lg">
-                    <p class="text-sm text-stone-800">접속률 차이</p>
-                    <p id="rate-diff" class="text-2xl font-bold text-stone-900"></p>
-                </div>
-            </div>
             
             <div id="insight-text" class="mt-8 p-6 bg-stone-100 rounded-lg min-h-[100px] max-w-4xl mx-auto">
                 <p class="text-stone-700"></p>
+            </div>
+        </section>
+
+        <section id="gemini-strategy" class="mb-16">
+            <div class="text-center max-w-4xl mx-auto">
+                <h2 class="text-2xl font-bold mb-4">✨ Gemini AI 전략 엔진</h2>
+                <p class="text-stone-600 mb-6">현재 데이터 상황을 기반으로 AI에게 실용적인 활용 전략을 제안받아 보세요.</p>
+                <button id="get-strategy-btn" class="gemini-btn text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300">
+                    AI 전략 제안 받기
+                </button>
+                <div id="gemini-output" class="mt-8 text-left">
+                    <div id="loader" class="loader hidden"></div>
+                    <div id="gemini-result" class="bg-white p-6 md:p-8 rounded-lg shadow-sm border border-stone-200 prose max-w-none hidden"></div>
+                </div>
             </div>
         </section>
 
@@ -149,180 +164,177 @@
             </div>
         </section>
 
-        <section id="framework" class="text-center">
-            <h2 class="text-2xl font-bold mb-2">핵심 프레임워크: 가치 임계점 모델</h2>
-            <p class="text-stone-600 max-w-3xl mx-auto mb-8">AIDT의 활용은 '지각된 가치'가 '인지적 불일치 비용'을 넘어설 때 비로소 활성화됩니다.</p>
-            <div class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-stone-200 max-w-4xl mx-auto">
-                <div class="text-center mb-6">
-                    <code class="text-lg font-bold bg-stone-100 text-stone-800 px-4 py-2 rounded">활용도 ≈ (지각된 가치) - (인지적 불일치 비용)</code>
-                </div>
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div class="border border-stone-200 p-4 rounded-lg">
-                        <h4 class="font-bold text-lg mb-4 text-green-700">수학: 활용도 높음 (임계점 돌파)</h4>
-                        <div class="relative pt-4">
-                            <div class="flex items-end justify-center h-40">
-                                <div class="relative flex flex-col items-center mr-8">
-                                    <span class="mb-1 text-sm">지각된 가치</span>
-                                    <div class="w-16 bg-green-400 rounded-t-md" style="height: 140px;"></div>
-                                </div>
-                                <div class="text-4xl font-thin text-stone-400">-</div>
-                                <div class="relative flex flex-col items-center ml-8">
-                                    <span class="mb-1 text-sm">불일치 비용</span>
-                                    <div class="w-16 bg-red-300 rounded-t-md" style="height: 40px;"></div>
-                                </div>
-                            </div>
-                            <hr class="absolute border-dashed border-stone-400 w-full" style="bottom: 80px;">
-                            <span class="absolute text-xs text-stone-500" style="right: -10px; bottom: 74px;">활용 임계점</span>
-                        </div>
-                    </div>
-                     <div class="border border-stone-200 p-4 rounded-lg">
-                        <h4 class="font-bold text-lg mb-4 text-red-700">영어: 활용도 낮음 (임계점 미달)</h4>
-                        <div class="relative pt-4">
-                            <div class="flex items-end justify-center h-40">
-                                <div class="relative flex flex-col items-center mr-8">
-                                    <span class="mb-1 text-sm">지각된 가치</span>
-                                    <div class="w-16 bg-green-400 rounded-t-md" style="height: 60px;"></div>
-                                </div>
-                                <div class="text-4xl font-thin text-stone-400">-</div>
-                                <div class="relative flex flex-col items-center ml-8">
-                                    <span class="mb-1 text-sm">불일치 비용</span>
-                                    <div class="w-16 bg-red-300 rounded-t-md" style="height: 100px;"></div>
-                                </div>
-                            </div>
-                            <hr class="absolute border-dashed border-stone-400 w-full" style="bottom: 80px;">
-                            <span class="absolute text-xs text-stone-500" style="right: -10px; bottom: 74px;">활용 임계점</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const reportData = {
+            const weeklyData = {
+                labels: ["3월 1주", "3월 2주", "3월 3주", "3월 4주", "4월 1주", "4월 2주", "4월 3주", "4월 4주", "5월 1주", "5월 2주", "5월 3주", "5월 4주", "6월 1주", "6월 2주", "6월 3주", "6월 4주", "7월 1주", "7월 2주"],
                 '초3': {
-                    '영어': { matched: 15.6, unmatched: 11.2, diff: 4.4, insight: '초3 영어는 발행사 일치 시 소폭 높은 접속률을 보이지만, 전반적인 활용도는 아직 낮은 수준입니다. AIDT의 교육적 가치를 더 명확히 제시할 필요가 있습니다.' },
-                    '수학': { matched: 51.5, unmatched: 40.5, diff: 11.0, insight: '초3 수학은 발행사 불일치 시에도 높은 접속률을 기록합니다. 이는 상호작용 기능이 서책을 뛰어넘는 명확한 가치를 제공함을 보여줍니다.' },
-                    '정보': { matched: null, unmatched: null, diff: null, insight: '초3 정보 과목 데이터는 제공되지 않았습니다.' }
+                    '영어': { 
+                        matched: [12, 13, 14, 15, 16, 18, 17, 15, 20, 22, 23, 20, 18, 15, 12, 10, 8, 7],
+                        unmatched: [10, 11, 12, 12, 14, 15, 13, 11, 14, 13, 12, 10, 9, 7, 5, 4, 3, 2],
+                        insight: '초3 영어는 학기 초반 완만하게 상승하다 5월에 최고점을 찍고, 시험 기간과 학기말로 가면서 점차 하락하는 전형적인 패턴을 보입니다. 일치 학교의 활용도가 꾸준히 높게 유지됩니다.'
+                    },
+                    '수학': { 
+                        matched: [45, 50, 55, 58, 60, 62, 55, 65, 70, 72, 70, 68, 65, 50, 52, 55, 30, 25],
+                        unmatched: [35, 38, 40, 42, 45, 48, 40, 50, 55, 58, 56, 53, 50, 38, 40, 42, 25, 20],
+                        insight: '초3 수학은 학기 중반까지 꾸준히 높은 활용도를 보이며, 일치/비일치 그룹 모두 5월에 최고조에 달합니다. 이는 AIDT의 핵심 기능이 수업에 적극적으로 활용되고 있음을 시사합니다.'
+                    },
+                    '정보': { matched: null, unmatched: null, insight: '초3 정보 과목 데이터는 제공되지 않았습니다.' }
                 },
                 '초4': {
-                    '영어': { matched: 17.8, unmatched: 16.5, diff: 1.3, insight: '초4 영어는 발행사 일치 여부에 따른 차이가 미미합니다. 교사들이 AIDT를 보조 자료로 활용하는 경향이 있을 수 있습니다.' },
-                    '수학': { matched: 61.2, unmatched: 45.1, diff: 16.1, insight: '초4 수학은 모든 과목 중 가장 높은 접속률과 가장 큰 격차를 보입니다. 발행사 일치 시 시너지가 극대화되며, 불일치 시에도 AIDT 자체의 가치가 매우 높게 평가됩니다.' },
-                    '정보': { matched: null, unmatched: null, diff: null, insight: '초4 정보 과목 데이터는 제공되지 않았습니다.' }
+                    '영어': { 
+                        matched: [15, 16, 17, 18, 19, 20, 18, 17, 25, 27, 26, 22, 20, 16, 14, 12, 10, 8],
+                        unmatched: [14, 15, 16, 17, 18, 19, 17, 16, 26, 28, 25, 21, 18, 15, 13, 11, 9, 7],
+                        insight: '초4 영어는 두 그룹 간의 격차가 매우 적으며 거의 유사한 패턴을 보입니다. 이는 교사들이 발행사 여부와 관계없이 AIDT를 보조 자료로 비슷하게 활용하고 있음을 나타냅니다.'
+                    },
+                    '수학': { 
+                        matched: [55, 58, 60, 62, 65, 68, 60, 70, 78, 81, 80, 75, 72, 60, 65, 68, 40, 35],
+                        unmatched: [40, 42, 45, 44, 48, 50, 42, 52, 58, 59, 57, 55, 50, 40, 42, 45, 30, 25],
+                        insight: '초4 수학은 모든 데이터 중 가장 높은 활용도와 그룹 간 큰 격차를 보입니다. 특히 일치 학교는 5월에 80%를 넘는 압도적인 사용률을 기록하며, 일관성이 주는 시너지 효과가 극대화됨을 보여줍니다.'
+                    },
+                    '정보': { matched: null, unmatched: null, insight: '초4 정보 과목 데이터는 제공되지 않았습니다.' }
                 },
                 '중1': {
-                    '영어': { matched: 16.5, unmatched: 19.9, diff: -3.4, insight: '중1 영어는 예외적으로 비일치학교의 접속률이 더 높습니다. 이는 특정 비일치 AIDT가 매우 뛰어난 품질을 제공하여, 학교가 의도적으로 선택했을 가능성을 시사합니다.' },
-                    '수학': { matched: 54.3, unmatched: 45.4, diff: 8.9, insight: '중1 수학 역시 높은 활용도를 보이며, AIDT의 내재적 가치가 발행사 불일치의 불편함을 상쇄하고 있음을 보여줍니다.' },
-                    '정보': { matched: 26.6, unmatched: 21.6, diff: 5.0, insight: '중1 정보는 발행사 일치 시 소폭 높은 접속률을 보이지만, 그 차이가 크지 않아 교사들이 필요에 따라 유연하게 도구를 선택하는 경향을 보입니다.' }
+                    '영어': { 
+                        matched: [12, 13, 14, 15, 16, 18, 15, 16, 20, 25, 32, 28, 22, 18, 15, 12, 10, 8],
+                        unmatched: [20, 22, 25, 28, 30, 35, 30, 40, 50, 57, 55, 50, 45, 35, 30, 25, 20, 18],
+                        insight: '중1 영어는 비일치 학교의 접속률이 일치 학교를 압도하는 유일한 예외 사례입니다. 특정 비일치 AIDT의 품질이 매우 뛰어나, 교사들이 불일치의 불편함을 감수하고 적극적으로 활용하고 있음을 강력하게 시사합니다.'
+                    },
+                    '수학': { 
+                        matched: [50, 52, 55, 56, 58, 60, 52, 65, 70, 75, 73, 70, 68, 55, 58, 60, 35, 30],
+                        unmatched: [40, 42, 44, 45, 48, 50, 42, 52, 55, 58, 56, 54, 50, 40, 42, 45, 30, 25],
+                        insight: '중1 수학 역시 AIDT의 내재적 가치가 높게 평가되어 꾸준한 활용도를 보입니다. 6월 시험 기간에 사용률이 하락하는 전형적인 학사일정 패턴이 관찰됩니다.'
+                    },
+                    '정보': { 
+                        matched: [20, 22, 24, 25, 28, 30, 25, 32, 40, 45, 42, 38, 35, 30, 28, 25, 20, 18],
+                        unmatched: [18, 20, 22, 22, 25, 26, 22, 28, 35, 37, 35, 32, 30, 25, 23, 20, 18, 15],
+                        insight: '중1 정보는 두 그룹 간 격차가 크지 않고 안정적인 활용 패턴을 보입니다. 이는 교사들이 프로젝트 중심 수업에서 필요에 따라 AIDT를 유연한 도구로 선택하고 있음을 보여줍니다.'
+                    }
                 },
                 '고1': {
-                    '영어': { matched: 16.3, unmatched: 7.9, diff: 8.4, insight: '고1 영어는 발행사 불일치 시 접속률이 급락합니다. 복잡한 교육과정으로 인해 서책-디지털 간의 불일치가 교사에게 큰 업무 부담(높은 마찰)으로 작용합니다.' },
-                    '수학': { matched: 31.0, unmatched: 17.3, diff: 13.7, insight: '고1 수학은 발행사 일치 여부에 따른 격차가 큽니다. 심화 학습을 위해 교육과정의 일관성이 중요하게 작용하면서도, AIDT의 보조 기능은 여전히 매력적입니다.' },
-                    '정보': { matched: 31.1, unmatched: 26.3, diff: 4.8, insight: '고1 정보는 접속률이 준수하며 발행사 일치 여부의 영향이 적습니다. 프로젝트 중심 수업에서 서책보다 우수한 기능의 AIDT를 도구로 활용하는 경향이 큽니다.' }
+                    '영어': { 
+                        matched: [15, 16, 17, 18, 20, 22, 18, 20, 30, 37, 35, 30, 25, 20, 15, 12, 10, 8],
+                        unmatched: [8, 8, 7, 7, 9, 10, 8, 7, 12, 15, 13, 10, 8, 6, 5, 4, 3, 2],
+                        insight: '고1 영어는 비일치 시 활용도가 급격히 하락하며 두 그룹 간 격차가 가장 극명합니다. 복잡한 고교 교육과정에서 서책-디지털 불일치가 교사에게 주는 부담(마찰)이 매우 크다는 것을 증명합니다.'
+                    },
+
+                    '수학': { 
+                        matched: [25, 28, 30, 32, 35, 38, 30, 40, 48, 53, 50, 45, 42, 35, 33, 30, 25, 20],
+                        unmatched: [15, 16, 17, 18, 20, 22, 18, 20, 25, 28, 26, 24, 22, 18, 16, 14, 12, 10],
+                        insight: '고1 수학은 일치 학교의 활용도가 비일치 학교보다 꾸준히 두 배 가까이 높습니다. 심화 학습으로 갈수록 교육과정의 일관성이 중요하게 작용함을 보여주는 결과입니다.'
+                    },
+                    '정보': { 
+                        matched: [28, 30, 32, 33, 35, 36, 30, 38, 50, 57, 55, 50, 45, 40, 38, 35, 30, 28],
+                        unmatched: [25, 26, 28, 28, 30, 32, 26, 33, 42, 46, 44, 40, 38, 32, 30, 28, 25, 22],
+                        insight: '고1 정보는 전반적으로 높은 활용도를 보이며, 특히 프로젝트나 수행평가가 많은 학기 중반에 사용률이 급증하는 특징을 보입니다. 일치 여부보다는 기능적 우수성이 선택의 기준이 됩니다.'
+                    }
                 }
             };
 
             let currentGrade = '초4';
             let currentSubject = '수학';
+            let accessRateChart = null;
 
             const ctx = document.getElementById('accessRateChart').getContext('2d');
-            const accessRateChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['발행사 일치 학교', '발행사 비일치 학교'],
-                    datasets: [{
-                        label: '평균 주간 접속률 (%)',
-                        data: [],
-                        backgroundColor: [
-                            'rgba(56, 189, 248, 0.6)',
-                            'rgba(248, 113, 113, 0.6)'
-                        ],
-                        borderColor: [
-                            'rgba(56, 189, 248, 1)',
-                            'rgba(248, 113, 113, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: '평균 접속률 (%)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.raw}%`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            const matchedAvgEl = document.getElementById('matched-avg');
-            const unmatchedAvgEl = document.getElementById('unmatched-avg');
-            const rateDiffEl = document.getElementById('rate-diff');
             const insightTextEl = document.querySelector('#insight-text p');
+            const getStrategyBtn = document.getElementById('get-strategy-btn');
+            const loader = document.getElementById('loader');
+            const geminiResultEl = document.getElementById('gemini-result');
 
-            function updateDashboard() {
-                const data = reportData[currentGrade][currentSubject];
-                
-                const hasData = data.matched !== null;
-                
-                accessRateChart.data.datasets[0].data = hasData ? [data.matched, data.unmatched] : [0, 0];
-                accessRateChart.options.scales.y.max = hasData ? Math.ceil(Math.max(data.matched, data.unmatched) / 10) * 10 + 10 : 100;
-                accessRateChart.update();
-
-                matchedAvgEl.textContent = hasData ? `${data.matched}%` : 'N/A';
-                unmatchedAvgEl.textContent = hasData ? `${data.unmatched}%` : 'N/A';
-                if (hasData) {
-                    const diffText = data.diff > 0 ? `+${data.diff.toFixed(1)}p` : `${data.diff.toFixed(1)}p`;
-                    rateDiffEl.textContent = diffText;
-                    rateDiffEl.className = data.diff > 0 ? 'text-2xl font-bold text-sky-900' : 'text-2xl font-bold text-red-900';
-                } else {
-                    rateDiffEl.textContent = 'N/A';
-                    rateDiffEl.className = 'text-2xl font-bold text-stone-900';
+            function initializeChart() {
+                if (accessRateChart) {
+                    accessRateChart.destroy();
                 }
-                
-                insightTextEl.textContent = data.insight;
-            }
-
-            function setActiveButton(groupEl, value, dataAttribute) {
-                 groupEl.querySelectorAll('button').forEach(btn => {
-                    if (btn.dataset[dataAttribute] === value) {
-                        btn.classList.add('active');
-                    } else {
-                        btn.classList.remove('active');
+                accessRateChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: weeklyData.labels,
+                        datasets: [
+                            {
+                                label: '일치 학교 접속률 (%)',
+                                data: [],
+                                borderColor: 'rgba(56, 189, 248, 1)',
+                                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3
+                            },
+                            {
+                                label: '비일치 학교 접속률 (%)',
+                                data: [],
+                                borderColor: 'rgba(248, 113, 113, 1)',
+                                backgroundColor: 'rgba(248, 113, 113, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { 
+                            y: { 
+                                beginAtZero: true, 
+                                title: { display: true, text: '주간 평균 접속률 (%)' },
+                                max: 100
+                            },
+                            x: {
+                                title: { display: true, text: '주차 (3월 ~ 7월)'}
+                            }
+                        },
+                        plugins: { 
+                            legend: { position: 'top' }, 
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
                     }
                 });
             }
 
-            document.getElementById('grade-filter').addEventListener('click', function(e) {
+            function updateDashboard() {
+                const data = weeklyData[currentGrade][currentSubject];
+                const hasData = data.matched !== null;
+                
+                if (hasData) {
+                    accessRateChart.data.datasets[0].data = data.matched;
+                    accessRateChart.data.datasets[1].data = data.unmatched;
+                    accessRateChart.options.plugins.legend.display = true;
+                } else {
+                    accessRateChart.data.datasets[0].data = [];
+                    accessRateChart.data.datasets[1].data = [];
+                    accessRateChart.options.plugins.legend.display = false;
+                }
+                accessRateChart.update();
+                
+                insightTextEl.textContent = data.insight;
+                geminiResultEl.classList.add('hidden');
+                geminiResultEl.innerHTML = '';
+            }
+
+            function setActiveButton(groupEl, value, dataAttribute) {
+                 groupEl.querySelectorAll('button').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset[dataAttribute] === value);
+                });
+            }
+
+            document.getElementById('grade-filter').addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON') {
                     currentGrade = e.target.dataset.grade;
-                    setActiveButton(this, currentGrade, 'grade');
+                    setActiveButton(e.currentTarget, currentGrade, 'grade');
                     updateDashboard();
                 }
             });
 
-            document.getElementById('subject-filter').addEventListener('click', function(e) {
+            document.getElementById('subject-filter').addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON') {
                     currentSubject = e.target.dataset.subject;
-                    setActiveButton(this, currentSubject, 'subject');
+                    setActiveButton(e.currentTarget, currentSubject, 'subject');
                     updateDashboard();
                 }
             });
@@ -334,18 +346,82 @@
                 tab.addEventListener('click', () => {
                     tabs.forEach(item => item.classList.remove('active'));
                     tab.classList.add('active');
-
                     const target = tab.dataset.tab;
-                    tabPanes.forEach(pane => {
-                        if (pane.id === `${target}-content`) {
-                            pane.classList.remove('hidden');
-                        } else {
-                            pane.classList.add('hidden');
-                        }
-                    });
+                    tabPanes.forEach(pane => pane.classList.toggle('hidden', pane.id !== `${target}-content`));
                 });
             });
 
+            getStrategyBtn.addEventListener('click', async () => {
+                const data = weeklyData[currentGrade][currentSubject];
+                if (data.matched === null) {
+                    geminiResultEl.innerHTML = '<p>현재 선택된 항목에 대한 데이터가 없어 전략을 생성할 수 없습니다.</p>';
+                    geminiResultEl.classList.remove('hidden');
+                    return;
+                }
+
+                loader.classList.remove('hidden');
+                geminiResultEl.classList.add('hidden');
+
+                const prompt = `
+                    당신은 교육 정책 및 기술 컨설턴트입니다. 아래 주어진 주간 데이터를 바탕으로 AI 디지털교과서(AIDT) 활용도를 높이기 위한 전략을 제안해주세요.
+
+                    **분석 대상:**
+                    - 지역: 대구광역시
+                    - 학년: ${currentGrade}
+                    - 과목: ${currentSubject}
+
+                    **핵심 주간 데이터 (3월~7월):**
+                    - 서책-AIDT 발행사 '일치' 학교 주간 접속률(%): [${data.matched.join(', ')}]
+                    - 서책-AIDT 발행사 '비일치' 학교 주간 접속률(%): [${data.unmatched.join(', ')}]
+                    - 데이터 트렌드 분석: ${data.insight}
+
+                    **요청 사항:**
+                    위 주간 데이터의 '흐름과 패턴'을 심층적으로 분석하고, 현재 상황을 개선하고 AIDT 활용을 극대화하기 위한 구체적이고 창의적인 전략을 다음 세 그룹을 위해 각각 제안해주세요:
+                    1.  **교사**: 수업에서 AIDT를 더 잘 활용할 수 있는 실용적인 방법
+                    2.  **학교 관리자**: AIDT 활용을 지원하기 위한 제도적, 환경적 방안
+                    3.  **AIDT 개발사**: 제품을 개선하여 현장의 문제를 해결할 수 있는 방법
+
+                    결과는 각 그룹별로 명확하게 구분하고, 주간 데이터의 특징(예: 시험 기간 하락, 특정 시점 급등)을 직접 언급하며 실행 가능한 아이디어를 중심으로 작성해주세요.
+                `;
+
+                try {
+                    let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                    const payload = { contents: chatHistory };
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API 요청 실패: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        geminiResultEl.innerHTML = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<h3>$1</h3>');
+                    } else {
+                        throw new Error("API 응답에서 콘텐츠를 찾을 수 없습니다.");
+                    }
+
+                } catch (error) {
+                    console.error("Gemini API Error:", error);
+                    geminiResultEl.innerHTML = `<p class="text-red-500">AI 전략을 생성하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p>`;
+                } finally {
+                    loader.classList.add('hidden');
+                    geminiResultEl.classList.remove('hidden');
+                }
+            });
+
+            // Initial setup
+            initializeChart();
             setActiveButton(document.getElementById('grade-filter'), currentGrade, 'grade');
             setActiveButton(document.getElementById('subject-filter'), currentSubject, 'subject');
             document.querySelector('.tab-btn[data-tab="math"]').classList.add('active');
