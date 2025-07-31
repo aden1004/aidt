@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 디지털교과서 활용도 인터랙티브 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Sky Blue Accent -->
+    <!-- Application Structure Plan: A top-down narrative flow is designed to guide the user from the core problem to data exploration, and finally to causal analysis. It starts with the central dilemma ('Consistency vs. Quality'), moves to an interactive data explorer where users can filter and visualize the quantitative data, then delves into the 'why' with a tabbed interface for subject-specific deep dives, and concludes by presenting the unifying 'Value Threshold' framework. This structure transforms the linear report into an exploratory journey, allowing users to understand the 'what' before digging into the 'why', which enhances comprehension and engagement. -->
+    <!-- Visualization & Content Choices: 
+        1. Core Dilemma: Goal=Inform. Method=HTML/CSS cards. Interaction=Hover. Justification=Introduces the report's central conflict visually and concisely.
+        2. Data Explorer: Goal=Compare/Explore. Method=Chart.js Bar Chart & Dynamic Text. Interaction=Button filters. Justification=Allows active user engagement with the core quantitative data, making complex comparisons intuitive.
+        3. Deep Dives: Goal=Organize/Explain. Method=HTML/CSS Tabs. Interaction=Click to reveal. Justification=Breaks down dense analysis into manageable, user-selected sections, preventing information overload.
+        4. Framework Diagram: Goal=Synthesize. Method=HTML/CSS Diagram. Interaction=Static. Justification=Visually summarizes the report's core theoretical model for memorable, high-level understanding.
+        All choices adhere to the NO SVG/Mermaid constraint. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 45vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .tab-btn.active {
+            border-color: #0284c7;
+            background-color: #f0f9ff;
+            color: #0284c7;
+            font-weight: 700;
+        }
+        .filter-btn.active {
+            background-color: #0ea5e9;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-stone-900 mb-2">AI 디지털교과서 활용도 분석</h1>
+            <p class="text-lg text-stone-600">일관성의 편의성 vs 품질의 추구</p>
+        </header>
+
+        <section id="dilemma" class="mb-16">
+            <h2 class="text-2xl font-bold text-center mb-8">핵심 딜레마: 학교는 무엇을 선택하는가?</h2>
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200 text-center transition-all duration-300 hover:shadow-lg hover:border-sky-200">
+                    <div class="text-4xl mb-3">🔗</div>
+                    <h3 class="text-xl font-bold mb-2">일관성의 편의성</h3>
+                    <p class="text-stone-600">서책과 디지털 교과서 발행사를 통일하여 교사의 수업 준비 부담을 줄이고, 교육과정의 흐름을 원활하게 유지합니다.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200 text-center transition-all duration-300 hover:shadow-lg hover:border-sky-200">
+                    <div class="text-4xl mb-3">🏆</div>
+                    <h3 class="text-xl font-bold mb-2">품질의 추구</h3>
+                    <p class="text-stone-600">발행사가 다르더라도, 교육적으로 월등히 우수한 기능을 제공하는 디지털 교과서를 선택하여 학습 효과를 극대화합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="explorer" class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-stone-200 mb-16">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold mb-2">인터랙티브 데이터 탐색기</h2>
+                <p class="text-stone-600 max-w-3xl mx-auto">학년과 과목을 선택하여 서책-디지털 교과서 발행사 일치 여부에 따른 주간 접속률 차이를 확인해보세요.</p>
+            </div>
+            
+            <div class="flex flex-wrap justify-center gap-4 mb-8" id="filter-controls">
+                <div class="w-full md:w-auto">
+                    <span class="font-bold mr-3">학년:</span>
+                    <div class="inline-flex rounded-md shadow-sm" role="group" id="grade-filter">
+                        <button type="button" data-grade="초3" class="filter-btn px-4 py-2 text-sm font-medium text-stone-900 bg-white border border-stone-200 rounded-l-lg hover:bg-stone-100 focus:z-10 focus:ring-2 focus:ring-sky-500">초3</button>
+                        <button type="button" data-grade="초4" class="filter-btn px-4 py-2 text-sm font-medium text-stone-900 bg-white border-t border-b border-stone-200 hover:bg-stone-100 focus:z-10 focus:ring-2 focus:ring-sky-500">초4</button>
+                        <button type="button" data-grade="중1" class="filter-btn px-4 py-2 text-sm font-medium text-stone-900 bg-white border-t border-b border-stone-200 hover:bg-stone-100 focus:z-10 focus:ring-2 focus:ring-sky-500">중1</button>
+                        <button type="button" data-grade="고1" class="filter-btn px-4 py-2 text-sm font-medium text-stone-900 bg-white border border-stone-200 rounded-r-md hover:bg-stone-100 focus:z-10 focus:ring-2 focus:ring-sky-500">고1</button>
+                    </div>
+                </div>
+                 <div class="w-full md:w-auto">
+                    <span class="font-bold mr-3">과목:</span>
+                    <div class="inline-flex rounded-md shadow-sm" role="group" id="subject-filter">
+                        <button type="button" data-subject="영어" class="filter-btn px-4 py-2 text-sm font-medium text-stone-900 bg-white border border-stone-200 rounded-l-lg hover:bg-stone-100 focus:z-10 focus:ring-2 focus:ring-sky-500">영어</button>
+                        <button type="button" data-subject="수학" class="filter-btn px-4 py-2 text-sm font-medium text-stone-900 bg-white border-t border-b border-stone-200 hover:bg-stone-100 focus:z-10 focus:ring-2 focus:ring-sky-500">수학</button>
+                        <button type="button" data-subject="정보" class="filter-btn px-4 py-2 text-sm font-medium text-stone-900 bg-white border border-stone-200 rounded-r-md hover:bg-stone-100 focus:z-10 focus:ring-2 focus:ring-sky-500">정보</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container mb-8">
+                <canvas id="accessRateChart"></canvas>
+            </div>
+
+            <div id="analysis-display" class="grid md:grid-cols-3 gap-4 text-center max-w-4xl mx-auto mb-6">
+                <div class="bg-sky-50 p-4 rounded-lg">
+                    <p class="text-sm text-sky-800">일치학교 평균 접속률</p>
+                    <p id="matched-avg" class="text-2xl font-bold text-sky-900"></p>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg">
+                    <p class="text-sm text-red-800">비일치학교 평균 접속률</p>
+                    <p id="unmatched-avg" class="text-2xl font-bold text-red-900"></p>
+                </div>
+                <div class="bg-stone-100 p-4 rounded-lg">
+                    <p class="text-sm text-stone-800">접속률 차이</p>
+                    <p id="rate-diff" class="text-2xl font-bold text-stone-900"></p>
+                </div>
+            </div>
+            
+            <div id="insight-text" class="mt-8 p-6 bg-stone-100 rounded-lg min-h-[100px] max-w-4xl mx-auto">
+                <p class="text-stone-700"></p>
+            </div>
+        </section>
+
+        <section id="deep-dive" class="mb-16">
+            <h2 class="text-2xl font-bold text-center mb-8">과목별 심층 분석: 왜 이런 차이가 날까?</h2>
+            <div class="max-w-4xl mx-auto">
+                <div class="mb-4 flex justify-center border-b border-stone-200">
+                    <button class="tab-btn -mb-px border-b-2 border-transparent py-3 px-6 text-stone-600 hover:text-sky-600" data-tab="math">수학: 높은 내재적 가치</button>
+                    <button class="tab-btn -mb-px border-b-2 border-transparent py-3 px-6 text-stone-600 hover:text-sky-600" data-tab="english">영어: 높은 교육적 마찰</button>
+                    <button class="tab-btn -mb-px border-b-2 border-transparent py-3 px-6 text-stone-600 hover:text-sky-600" data-tab="info">정보: 유연한 활용</button>
+                </div>
+                <div id="tab-content" class="bg-white p-6 md:p-8 rounded-lg shadow-sm border border-stone-200">
+                    <div id="math-content" class="tab-pane">
+                        <h3 class="text-xl font-bold mb-4">가치가 마찰을 이기다</h3>
+                        <p class="text-stone-700">수학 AIDT는 발행사 일치 여부와 관계없이 높은 활용도를 보입니다. 이는 추상적 개념을 시각화하고, 개인별 맞춤형 문제 풀이와 즉각적인 피드백을 제공하는 기능이 서책 교과서가 줄 수 없는 명백한 '내재적 가치'를 제공하기 때문입니다. 교사들은 발행사 불일치로 인한 약간의 불편함을 감수하더라도, 학생의 학습 효과를 극대화할 수 있는 우수한 수학 AIDT를 적극적으로 선택하고 활용합니다.</p>
+                    </div>
+                    <div id="english-content" class="tab-pane hidden">
+                        <h3 class="text-xl font-bold mb-4">마찰이 가치를 압도하다</h3>
+                        <p class="text-stone-700">영어 AIDT는 특히 발행사가 다를 때 접속률이 급락합니다. 언어 학습은 듣기, 말하기, 읽기, 쓰기가 유기적으로 연결되어야 하는데, 서책과 AIDT의 단원 구성, 어휘, 활동 순서가 다르면 교육적 흐름이 끊깁니다. 이 '높은 마찰'은 교사가 두 콘텐츠를 연결하기 위해 과도한 노력을 투입하게 만들어, 결국 AIDT 활용을 포기하게 만드는 결정적 요인으로 작용합니다.</p>
+                    </div>
+                    <div id="info-content" class="tab-pane hidden">
+                        <h3 class="text-xl font-bold mb-4">도구로서의 유연성</h3>
+                        <p class="text-stone-700">정보 과목은 발행사 일치 여부에 큰 영향을 받지 않습니다. 정보 수업은 이론보다 코딩 실습, 프로젝트 중심으로 이루어지는 경우가 많아 서책은 참고 자료로 활용될 뿐입니다. 따라서 교사들은 서책의 흐름에 얽매이지 않고, 더 우수한 코딩 환경이나 프로젝트 모듈을 제공하는 AIDT를 '하나의 좋은 도구'로서 자유롭게 선택하여 활용하는 경향을 보입니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="framework" class="text-center">
+            <h2 class="text-2xl font-bold mb-2">핵심 프레임워크: 가치 임계점 모델</h2>
+            <p class="text-stone-600 max-w-3xl mx-auto mb-8">AIDT의 활용은 '지각된 가치'가 '인지적 불일치 비용'을 넘어설 때 비로소 활성화됩니다.</p>
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-md border border-stone-200 max-w-4xl mx-auto">
+                <div class="text-center mb-6">
+                    <code class="text-lg font-bold bg-stone-100 text-stone-800 px-4 py-2 rounded">활용도 ≈ (지각된 가치) - (인지적 불일치 비용)</code>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="border border-stone-200 p-4 rounded-lg">
+                        <h4 class="font-bold text-lg mb-4 text-green-700">수학: 활용도 높음 (임계점 돌파)</h4>
+                        <div class="relative pt-4">
+                            <div class="flex items-end justify-center h-40">
+                                <div class="relative flex flex-col items-center mr-8">
+                                    <span class="mb-1 text-sm">지각된 가치</span>
+                                    <div class="w-16 bg-green-400 rounded-t-md" style="height: 140px;"></div>
+                                </div>
+                                <div class="text-4xl font-thin text-stone-400">-</div>
+                                <div class="relative flex flex-col items-center ml-8">
+                                    <span class="mb-1 text-sm">불일치 비용</span>
+                                    <div class="w-16 bg-red-300 rounded-t-md" style="height: 40px;"></div>
+                                </div>
+                            </div>
+                            <hr class="absolute border-dashed border-stone-400 w-full" style="bottom: 80px;">
+                            <span class="absolute text-xs text-stone-500" style="right: -10px; bottom: 74px;">활용 임계점</span>
+                        </div>
+                    </div>
+                     <div class="border border-stone-200 p-4 rounded-lg">
+                        <h4 class="font-bold text-lg mb-4 text-red-700">영어: 활용도 낮음 (임계점 미달)</h4>
+                        <div class="relative pt-4">
+                            <div class="flex items-end justify-center h-40">
+                                <div class="relative flex flex-col items-center mr-8">
+                                    <span class="mb-1 text-sm">지각된 가치</span>
+                                    <div class="w-16 bg-green-400 rounded-t-md" style="height: 60px;"></div>
+                                </div>
+                                <div class="text-4xl font-thin text-stone-400">-</div>
+                                <div class="relative flex flex-col items-center ml-8">
+                                    <span class="mb-1 text-sm">불일치 비용</span>
+                                    <div class="w-16 bg-red-300 rounded-t-md" style="height: 100px;"></div>
+                                </div>
+                            </div>
+                            <hr class="absolute border-dashed border-stone-400 w-full" style="bottom: 80px;">
+                            <span class="absolute text-xs text-stone-500" style="right: -10px; bottom: 74px;">활용 임계점</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const reportData = {
+                '초3': {
+                    '영어': { matched: 15.6, unmatched: 11.2, diff: 4.4, insight: '초3 영어는 발행사 일치 시 소폭 높은 접속률을 보이지만, 전반적인 활용도는 아직 낮은 수준입니다. AIDT의 교육적 가치를 더 명확히 제시할 필요가 있습니다.' },
+                    '수학': { matched: 51.5, unmatched: 40.5, diff: 11.0, insight: '초3 수학은 발행사 불일치 시에도 높은 접속률을 기록합니다. 이는 상호작용 기능이 서책을 뛰어넘는 명확한 가치를 제공함을 보여줍니다.' },
+                    '정보': { matched: null, unmatched: null, diff: null, insight: '초3 정보 과목 데이터는 제공되지 않았습니다.' }
+                },
+                '초4': {
+                    '영어': { matched: 17.8, unmatched: 16.5, diff: 1.3, insight: '초4 영어는 발행사 일치 여부에 따른 차이가 미미합니다. 교사들이 AIDT를 보조 자료로 활용하는 경향이 있을 수 있습니다.' },
+                    '수학': { matched: 61.2, unmatched: 45.1, diff: 16.1, insight: '초4 수학은 모든 과목 중 가장 높은 접속률과 가장 큰 격차를 보입니다. 발행사 일치 시 시너지가 극대화되며, 불일치 시에도 AIDT 자체의 가치가 매우 높게 평가됩니다.' },
+                    '정보': { matched: null, unmatched: null, diff: null, insight: '초4 정보 과목 데이터는 제공되지 않았습니다.' }
+                },
+                '중1': {
+                    '영어': { matched: 16.5, unmatched: 19.9, diff: -3.4, insight: '중1 영어는 예외적으로 비일치학교의 접속률이 더 높습니다. 이는 특정 비일치 AIDT가 매우 뛰어난 품질을 제공하여, 학교가 의도적으로 선택했을 가능성을 시사합니다.' },
+                    '수학': { matched: 54.3, unmatched: 45.4, diff: 8.9, insight: '중1 수학 역시 높은 활용도를 보이며, AIDT의 내재적 가치가 발행사 불일치의 불편함을 상쇄하고 있음을 보여줍니다.' },
+                    '정보': { matched: 26.6, unmatched: 21.6, diff: 5.0, insight: '중1 정보는 발행사 일치 시 소폭 높은 접속률을 보이지만, 그 차이가 크지 않아 교사들이 필요에 따라 유연하게 도구를 선택하는 경향을 보입니다.' }
+                },
+                '고1': {
+                    '영어': { matched: 16.3, unmatched: 7.9, diff: 8.4, insight: '고1 영어는 발행사 불일치 시 접속률이 급락합니다. 복잡한 교육과정으로 인해 서책-디지털 간의 불일치가 교사에게 큰 업무 부담(높은 마찰)으로 작용합니다.' },
+                    '수학': { matched: 31.0, unmatched: 17.3, diff: 13.7, insight: '고1 수학은 발행사 일치 여부에 따른 격차가 큽니다. 심화 학습을 위해 교육과정의 일관성이 중요하게 작용하면서도, AIDT의 보조 기능은 여전히 매력적입니다.' },
+                    '정보': { matched: 31.1, unmatched: 26.3, diff: 4.8, insight: '고1 정보는 접속률이 준수하며 발행사 일치 여부의 영향이 적습니다. 프로젝트 중심 수업에서 서책보다 우수한 기능의 AIDT를 도구로 활용하는 경향이 큽니다.' }
+                }
+            };
+
+            let currentGrade = '초4';
+            let currentSubject = '수학';
+
+            const ctx = document.getElementById('accessRateChart').getContext('2d');
+            const accessRateChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['발행사 일치 학교', '발행사 비일치 학교'],
+                    datasets: [{
+                        label: '평균 주간 접속률 (%)',
+                        data: [],
+                        backgroundColor: [
+                            'rgba(56, 189, 248, 0.6)',
+                            'rgba(248, 113, 113, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(56, 189, 248, 1)',
+                            'rgba(248, 113, 113, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '평균 접속률 (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const matchedAvgEl = document.getElementById('matched-avg');
+            const unmatchedAvgEl = document.getElementById('unmatched-avg');
+            const rateDiffEl = document.getElementById('rate-diff');
+            const insightTextEl = document.querySelector('#insight-text p');
+
+            function updateDashboard() {
+                const data = reportData[currentGrade][currentSubject];
+                
+                const hasData = data.matched !== null;
+                
+                accessRateChart.data.datasets[0].data = hasData ? [data.matched, data.unmatched] : [0, 0];
+                accessRateChart.options.scales.y.max = hasData ? Math.ceil(Math.max(data.matched, data.unmatched) / 10) * 10 + 10 : 100;
+                accessRateChart.update();
+
+                matchedAvgEl.textContent = hasData ? `${data.matched}%` : 'N/A';
+                unmatchedAvgEl.textContent = hasData ? `${data.unmatched}%` : 'N/A';
+                if (hasData) {
+                    const diffText = data.diff > 0 ? `+${data.diff.toFixed(1)}p` : `${data.diff.toFixed(1)}p`;
+                    rateDiffEl.textContent = diffText;
+                    rateDiffEl.className = data.diff > 0 ? 'text-2xl font-bold text-sky-900' : 'text-2xl font-bold text-red-900';
+                } else {
+                    rateDiffEl.textContent = 'N/A';
+                    rateDiffEl.className = 'text-2xl font-bold text-stone-900';
+                }
+                
+                insightTextEl.textContent = data.insight;
+            }
+
+            function setActiveButton(groupEl, value, dataAttribute) {
+                 groupEl.querySelectorAll('button').forEach(btn => {
+                    if (btn.dataset[dataAttribute] === value) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            document.getElementById('grade-filter').addEventListener('click', function(e) {
+                if (e.target.tagName === 'BUTTON') {
+                    currentGrade = e.target.dataset.grade;
+                    setActiveButton(this, currentGrade, 'grade');
+                    updateDashboard();
+                }
+            });
+
+            document.getElementById('subject-filter').addEventListener('click', function(e) {
+                if (e.target.tagName === 'BUTTON') {
+                    currentSubject = e.target.dataset.subject;
+                    setActiveButton(this, currentSubject, 'subject');
+                    updateDashboard();
+                }
+            });
+            
+            const tabs = document.querySelectorAll('.tab-btn');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(item => item.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    const target = tab.dataset.tab;
+                    tabPanes.forEach(pane => {
+                        if (pane.id === `${target}-content`) {
+                            pane.classList.remove('hidden');
+                        } else {
+                            pane.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            setActiveButton(document.getElementById('grade-filter'), currentGrade, 'grade');
+            setActiveButton(document.getElementById('subject-filter'), currentSubject, 'subject');
+            document.querySelector('.tab-btn[data-tab="math"]').classList.add('active');
+            document.getElementById('math-content').classList.remove('hidden');
+            updateDashboard();
+        });
+    </script>
+</body>
+</html>
